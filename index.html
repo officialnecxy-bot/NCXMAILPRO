@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail Clean</title>
+    <title>MultiMail Ultimate</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -33,24 +33,34 @@
             user-select: none;
         }
 
+        /* --- TAP ANIMATION (RIPPLE) --- */
+        .ripple {
+            position: fixed; border-radius: 50%;
+            background: rgba(255, 59, 48, 0.6);
+            transform: scale(0); pointer-events: none;
+            animation: ripple-anim 0.6s linear; z-index: 9999;
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
         /* --- TRANSPARENT HEADER --- */
         .ios-header {
             position: fixed; top: 0; width: 100%; height: 80px;
-            background: transparent; /* 100% Transparent */
-            /* No Border, No Blur for clean look */
+            background: transparent; 
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 20px; padding-top: 15px; z-index: 100;
-            pointer-events: none; /* Let clicks pass through empty areas */
+            pointer-events: none; 
         }
         
-        .header-content { pointer-events: auto; } /* Re-enable clicks for buttons */
+        .header-content { pointer-events: auto; } 
 
-        .logo { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .logo { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; text-shadow: 0 5px 15px rgba(0,0,0,0.8); }
         .logo span { color: var(--primary); }
 
         .header-btn {
             width: 40px; height: 40px; border-radius: 50%;
-            background: rgba(20, 20, 20, 0.8); /* Semi-dark background for visibility */
+            background: rgba(20, 20, 20, 0.8); 
             border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: 0.2s; font-size: 1.1rem;
@@ -61,7 +71,6 @@
         /* --- CONTENT --- */
         .content {
             flex: 1; overflow-y: auto;
-            /* Padding top increased so content starts nicely */
             padding: 100px 20px 110px 20px; 
         }
 
@@ -210,7 +219,6 @@
         <div id="tab-home" class="tab-view active">
             <div class="card">
                 <div class="necxy-label">GMAIL BY NECXY</div>
-                
                 <div id="alias-display" class="email-display">
                     Tap Generate
                 </div>
@@ -239,10 +247,9 @@
         </div>
 
         <div id="tab-history" class="tab-view">
-            <div class="card" style="padding: 15px; margin-bottom: 20px;">
+             <div class="card" style="padding: 15px; margin-bottom: 20px;">
                 <button class="btn btn-outline" style="width:100%; border-color:var(--primary); color:var(--primary);" onclick="askClearHistory()">CLEAR ALL HISTORY</button>
             </div>
-
             <div id="history-list" class="list-container"></div>
         </div>
 
@@ -296,6 +303,17 @@
         let usedAliases = JSON.parse(localStorage.getItem('final_history')) || [];
         let confirmCallback = null;
 
+        // --- RIPPLE ANIMATION LOGIC ---
+        document.addEventListener('click', (e) => {
+            let ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = e.clientX + 'px';
+            ripple.style.top = e.clientY + 'px';
+            ripple.style.width = ripple.style.height = '20px';
+            document.body.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        });
+
         window.onload = () => {
             renderHistory();
             const savedToken = localStorage.getItem('persist_token');
@@ -334,7 +352,19 @@
             } catch(e) { alert("Login Failed"); }
         }
 
-        // --- CONFIRM MODAL ---
+        // --- DYNAMIC HEADER ---
+        function switchTab(id, el) {
+            document.querySelectorAll('.tab-view').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+
+            const titleEl = document.getElementById('header-title');
+            if(id === 'home') titleEl.innerHTML = 'MULTI<span>MAIL</span>';
+            if(id === 'scan') titleEl.innerText = 'SEARCH MAIL';
+            if(id === 'history') titleEl.innerText = 'HISTORY';
+        }
+
         function showConfirm(title, desc, callback) {
             document.getElementById('confirm-title').innerText = title;
             document.getElementById('confirm-desc').innerText = desc;
@@ -357,21 +387,6 @@
             });
         }
 
-        // --- DYNAMIC HEADER LOGIC ---
-        function switchTab(id, el) {
-            document.querySelectorAll('.tab-view').forEach(x => x.classList.remove('active'));
-            document.getElementById('tab-'+id).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-            el.classList.add('active');
-
-            // UPDATE HEADER TITLE
-            const titleEl = document.getElementById('header-title');
-            if(id === 'home') titleEl.innerHTML = 'MULTI<span>MAIL</span>';
-            if(id === 'scan') titleEl.innerText = 'SEARCH MAIL';
-            if(id === 'history') titleEl.innerText = 'HISTORY';
-        }
-
-        // --- CORE FUNCTIONS ---
         function generateHybridAlias() {
             if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
             const [u, d] = window.userEmail.split('@');
