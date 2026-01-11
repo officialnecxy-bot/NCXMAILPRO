@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiMail | Premium Alias Tool</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --glass-card: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary-red: #E50914; /* Netflix/Premium Red */
+            --text-white: #ffffff;
+            --text-gray: #a1a1a1;
+            --blur: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; outline: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Subtle dark gradient background */
+            background-image: radial-gradient(circle at 50% -20%, #1a0505 0%, #000000 60%);
+            overflow: hidden;
+        }
+
+        /* --- LOCK SCREEN (LOGIN) --- */
+        #auth-overlay {
+            position: absolute; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(30px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .brand-title { font-size: 3rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 10px; }
+        .text-red { color: var(--primary-red); }
+        .login-btn {
+            background: var(--text-white); color: #000; padding: 12px 30px;
+            border-radius: 30px; border: none; font-weight: 600; cursor: pointer;
+            transition: 0.3s; margin-top: 20px;
+        }
+        .login-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+
+        /* --- MAIN CONTAINER (Glass Card) --- */
+        .app-container {
+            width: 90%; max-width: 1100px; height: 85vh;
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            backdrop-filter: blur(var(--blur));
+            display: grid; grid-template-columns: 280px 1fr;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            border-right: 1px solid var(--glass-border);
+            padding: 30px 20px;
+            display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 700; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        
+        .menu-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-gray); margin-bottom: 15px; letter-spacing: 1px; }
+
+        .sidebar-btn {
+            background: transparent; border: 1px solid var(--glass-border); color: var(--text-gray);
+            padding: 10px; border-radius: 8px; cursor: pointer; text-align: left;
+            margin-bottom: 10px; transition: 0.2s; font-size: 0.9rem;
+        }
+        .sidebar-btn:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: #fff; }
+        
+        .history-list { flex: 1; overflow-y: auto; margin-top: 10px; }
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 1px solid var(--glass-border);
+            color: var(--text-gray); font-size: 0.85rem; cursor: pointer;
+        }
+        .history-item:hover { color: #fff; background: rgba(255,255,255,0.02); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { padding: 40px; overflow-y: auto; position: relative; }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .status-badge {
+            background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px;
+            font-size: 0.8rem; display: flex; align-items: center; gap: 8px;
+        }
+        .dot { width: 8px; height: 8px; background: #333; border-radius: 50%; }
+        .dot.online { background: #00e676; box-shadow: 0 0 10px #00e676; }
+
+        .install-btn {
+            display: none; /* JS will show this */
+            background: var(--primary-red); color: white; border: none;
+            padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; cursor: pointer;
+        }
+
+        /* Tools Section */
+        .tool-card {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 30px; margin-bottom: 30px;
+        }
+        .card-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 20px; color: var(--text-white); }
+
+        /* Inputs Grid */
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        
+        .input-group label { display: block; font-size: 0.8rem; color: var(--text-gray); margin-bottom: 8px; }
+        .custom-input, .custom-select {
+            width: 100%; background: transparent; border: 1px solid var(--glass-border);
+            color: #fff; padding: 12px; border-radius: 8px; transition: 0.3s;
+        }
+        .custom-input:focus, .custom-select:focus { border-color: var(--primary-red); }
+
+        /* Main Output */
+        .output-box {
+            background: rgba(0,0,0,0.3); border: 1px dashed var(--glass-border);
+            padding: 20px; border-radius: 10px; text-align: center;
+            font-size: 1.2rem; font-family: 'Courier New', monospace; margin-bottom: 20px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .output-box:hover { border-color: #fff; background: rgba(255,255,255,0.05); }
+
+        .action-btn {
+            width: 100%; background: var(--text-white); color: #000;
+            padding: 15px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer;
+            transition: 0.2s;
+        }
+        .action-btn:hover { background: var(--primary-red); color: #fff; }
+        .action-btn.secondary { background: transparent; border: 1px solid var(--glass-border); color: #fff; }
+        .action-btn.secondary:hover { border-color: var(--primary-red); color: var(--primary-red); }
+
+        /* OTP Result */
+        .otp-display {
+            margin-top: 15px; font-size: 0.9rem; color: var(--text-gray); line-height: 1.6;
+        }
+        .highlight { color: var(--primary-red); font-weight: bold; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        @media (max-width: 768px) {
+            .app-container { grid-template-columns: 1fr; height: 100vh; width: 100%; border-radius: 0; }
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <div class="brand-title">MULTI<span class="text-red">MAIL</span></div>
+        <p style="color: var(--text-gray);">Secure Email Environment</p>
+        <button class="login-btn" onclick="handleAuth()">Login with Gmail</button>
+    </div>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo"><i class="fas fa-layer-group text-red"></i> MultiMail</div>
+            
+            <div class="menu-label">Data Controls</div>
+            <button class="sidebar-btn" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button>
+            <button class="sidebar-btn" onclick="clearHistory()"><i class="fas fa-trash"></i> Clear History</button>
+
+            <div class="menu-label" style="margin-top: 20px;">Recent Aliases</div>
+            <div class="history-list" id="history-list">
+                </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="status-badge">
+                    <div id="status-dot" class="dot"></div>
+                    <span id="user-email-display" style="margin-left: 8px;">Offline</span>
+                </div>
+                <button id="install-btn" class="install-btn" onclick="installApp()">
+                    <i class="fas fa-arrow-down"></i> Install App
+                </button>
+            </header>
+
+            <section class="tool-card">
+                <h3 class="card-title">Generate New Alias</h3>
+                
+                <div class="grid-inputs">
+                    <div class="input-group">
+                        <label>Generation Mode</label>
+                        <select id="gen-mode" class="custom-select">
+                            <option value="dot">Dot Injection (Recommended)</option>
+                            <option value="plus">Plus Tagging (+)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Custom Tag (Optional)</label>
+                        <input type="text" id="custom-tag" class="custom-input" placeholder="e.g. netflix">
+                    </div>
+                </div>
+
+                <div id="alias-output" class="output-box" onclick="copyToClipboard(this.innerText)">
+                    Click Generate to Start
+                </div>
+
+                <button class="action-btn" onclick="generateAlias()">Generate & Copy</button>
+            </section>
+
+            <section class="tool-card">
+                <h3 class="card-title">OTP Scanner</h3>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="search-query" class="custom-input" value="from:Instagram" placeholder="Search query...">
+                    <button class="action-btn secondary" style="width: 120px;" onclick="fetchOTP()">Scan</button>
+                </div>
+                <div id="otp-result" class="otp-display">
+                    Waiting for scan...
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // CONFIGURATION
+        const CLIENT_ID = '327243505568-tp9gl9v9ifvdab55q2djb74vn3f1ht9j.apps.googleusercontent.com'; // User Provided
+        
+        let tokenClient, accessToken, deferredPrompt;
+        let usedAliases = JSON.parse(localStorage.getItem('multimail_history')) || [];
+
+        // --- PWA INSTALL LOGIC ---
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').style.display = 'inline-block';
+        });
+
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; }
+                deferredPrompt = null;
+            }
+        }
+
+        // --- AUTH & INIT ---
+        window.onload = function() {
+            renderHistory();
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/gmail.readonly',
+                callback: (r) => { accessToken = r.access_token; if(accessToken) fetchUserProfile(); }
+            });
+        };
+
+        function handleAuth() { tokenClient.requestAccessToken(); }
+
+        async function fetchUserProfile() {
+            try {
+                const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await res.json();
+                
+                // UI Unlock
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('status-dot').classList.add('online');
+                document.getElementById('user-email-display').innerText = data.emailAddress;
+                window.userEmail = data.emailAddress;
+            } catch(e) { alert("Login Failed. Please try again."); }
+        }
+
+        // --- GENERATOR LOGIC ---
+        function generateAlias() {
+            if(!window.userEmail) return alert("Please Login first.");
+            
+            const mode = document.getElementById('gen-mode').value;
+            const tag = document.getElementById('custom-tag').value;
+            const [user, domain] = window.userEmail.split('@');
+            let alias;
+
+            // Generate Logic
+            if(mode === 'plus') {
+                const suffix = tag ? tag.replace(/\s/g, '') : Math.random().toString(36).substring(2, 7);
+                alias = `${user}+${suffix}@${domain}`;
+            } else {
+                alias = applyRandomDots(user) + "@" + domain;
+            }
+
+            // Update UI
+            document.getElementById('alias-output').innerText = alias;
+            saveHistory(alias);
+            copyToClipboard(alias);
+        }
+
+        function applyRandomDots(str) {
+            let res = "";
+            for(let i=0; i<str.length; i++) {
+                res += str[i];
+                if(i < str.length-1 && Math.random() > 0.5) res += ".";
+            }
+            // Ensure at least one dot difference if possible
+            return res === str ? applyRandomDots(str) : res;
+        }
+
+        // --- SCANNER LOGIC ---
+        async function fetchOTP() {
+            if(!accessToken) return;
+            const q = document.getElementById('search-query').value;
+            const box = document.getElementById('otp-result');
+            
+            box.innerText = "Scanning inbox...";
+            
+            try {
+                const l = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=1`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const d = await l.json();
+                
+                if(d.messages && d.messages.length) {
+                    const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${d.messages[0].id}`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    const md = await m.json();
+                    box.innerHTML = `<span class="highlight">Mail Found:</span> ${md.snippet}`;
+                } else {
+                    box.innerText = "No emails found matching this query.";
+                }
+            } catch(e) { box.innerText = "Error fetching emails."; }
+        }
+
+        // --- UTILITIES ---
+        function saveHistory(a) {
+            usedAliases.unshift(a);
+            localStorage.setItem('multimail_history', JSON.stringify(usedAliases));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            usedAliases.forEach(email => {
+                let div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<span>${email.substring(0, 20)}...</span> <i class="fas fa-copy"></i>`;
+                div.onclick = () => copyToClipboard(email);
+                list.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            if(confirm("Delete all history?")) {
+                usedAliases = [];
+                localStorage.removeItem('multimail_history');
+                renderHistory();
+            }
+        }
+
+        function exportCSV() {
+            let csv = "data:text/csv;charset=utf-8,ALIAS_EMAIL\n" + usedAliases.join("\n");
+            let link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = "aliases.csv";
+            link.click();
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            const box = document.getElementById('alias-output');
+            let original = box.innerText;
+            if(box.innerText === text) {
+                box.innerText = "COPIED!";
+                setTimeout(() => box.innerText = text, 1000);
+            } else {
+                alert("Copied: " + text);
+            }
+        }
+    </script>
+</body>
+</html>
