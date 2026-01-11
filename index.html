@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail Infinity</title>
+    <title>MultiMail Architect</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
             --bg: #000000;
-            --glass: rgba(28, 28, 30, 0.85);
-            --border: rgba(255, 255, 255, 0.12);
-            --primary: #ff3b30;
+            --glass: rgba(20, 20, 20, 0.85);
+            --border: rgba(255, 255, 255, 0.15);
+            --primary: #ff3b30; /* Red */
             --white: #ffffff;
-            --blur: 40px;
+            --text-gray: #888;
+            --blur: 30px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -26,129 +27,138 @@
         body {
             background-color: var(--bg);
             color: var(--white);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
             height: 100vh;
             display: flex; flex-direction: column;
             overflow: hidden;
             user-select: none;
         }
 
-        /* --- TAP ANIMATION (RIPPLE) --- */
-        .ripple {
-            position: fixed; border-radius: 50%;
-            background: rgba(255, 59, 48, 0.6);
-            transform: scale(0); pointer-events: none;
-            animation: ripple-anim 0.6s linear; z-index: 9999;
-        }
-        @keyframes ripple-anim {
-            to { transform: scale(4); opacity: 0; }
-        }
-
-        /* --- HEADER --- */
+        /* --- HEADER (Fixed & High Z-Index) --- */
         .ios-header {
             position: fixed; top: 0; width: 100%; height: 80px;
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(var(--blur));
-            border-bottom: 0.5px solid var(--border);
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(var(--blur));
+            border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; padding-top: 10px; z-index: 50;
+            padding: 0 20px; padding-top: 10px; z-index: 100; /* Z-Index increased */
         }
-        .logo { font-family: 'Archivo Black', sans-serif; font-size: 1.6rem; letter-spacing: -1px; }
-        
-        .header-actions { display: flex; gap: 15px; }
-        .icon-btn {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; cursor: pointer; transition: 0.2s;
-        }
-        .icon-btn:active { transform: scale(0.9); background: var(--primary); color: #000; }
+        .logo { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; }
+        .logo span { color: var(--primary); }
 
-        /* --- MAIN SCROLL --- */
-        .scroll-view { flex: 1; overflow-y: auto; padding: 100px 20px 110px 20px; }
-        
-        .tab-content { display: none; animation: iosFade 0.4s ease; }
-        .tab-content.active { display: block; }
-        @keyframes iosFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        .header-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.2s; font-size: 1.1rem;
+        }
+        .header-btn:active { background: var(--primary); color: #000; }
+
+        /* --- MAIN SCROLL AREA (Padding Fix) --- */
+        .content {
+            flex: 1; overflow-y: auto;
+            /* Padding Top 130px to clear header */
+            padding: 130px 20px 110px 20px; 
+        }
+
+        .tab-view { display: none; animation: slideUp 0.3s ease; }
+        .tab-view.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- GLASS CARDS --- */
-        .glass-card {
+        .card {
             background: var(--glass); border: 1px solid var(--border);
             border-radius: 24px; padding: 25px; margin-bottom: 25px;
             text-align: center; backdrop-filter: blur(var(--blur));
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
 
-        .email-box {
-            background: #000; border: 1px solid #333;
-            padding: 22px; border-radius: 16px; margin-bottom: 20px;
-            font-family: monospace; font-size: 1.1rem; color: #888;
+        .email-display {
+            background: #080808; border: 1px dashed #333;
+            padding: 20px; border-radius: 16px; margin-bottom: 20px;
+            font-family: monospace; font-size: 1.1rem; color: #777;
             word-break: break-all;
         }
-        .email-box.active { color: #fff; border-color: var(--primary); }
+        .email-display.active { color: #fff; border-color: var(--primary); border-style: solid; }
 
-        .red-btn {
-            width: 100%; background: var(--primary); color: #fff;
-            border: none; padding: 20px; border-radius: 18px;
-            font-family: 'Archivo Black', sans-serif; text-transform: uppercase;
-            font-size: 1.1rem; cursor: pointer; box-shadow: 0 8px 30px rgba(255, 59, 48, 0.4);
-        }
-        .red-btn:active { transform: scale(0.97); }
-
-        /* --- LISTS --- */
-        .list-group { border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
-        .list-item {
-            background: var(--glass); border-bottom: 1px solid var(--border);
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-        }
-        .list-item:last-child { border-bottom: none; }
+        /* --- BUTTONS --- */
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         
-        .list-info { width: 75%; text-align: left; }
-        .list-head { font-weight: 800; font-size: 1rem; color: #fff; margin-bottom: 5px; }
-        .list-sub { font-size: 0.85rem; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn {
+            flex: 1; padding: 16px; border-radius: 14px; border: none;
+            font-weight: 800; font-size: 0.9rem; text-transform: uppercase;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 5px 20px rgba(255, 59, 48, 0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: #fff; }
+        
+        .btn:active { transform: scale(0.95); }
 
-        /* --- TAB BAR --- */
-        .tab-bar {
+        /* --- SPIN ANIMATION --- */
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- INBOX LIST --- */
+        .list-container {
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 20px; overflow: hidden;
+        }
+        .list-item {
+            padding: 20px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
+        }
+        .list-item:active { background: rgba(255,255,255,0.05); }
+
+        /* --- BOTTOM NAV --- */
+        .nav-bar {
             position: fixed; bottom: 0; width: 100%; height: 90px;
-            background: rgba(0,0,0,0.95); border-top: 0.5px solid var(--border);
-            display: flex; justify-content: space-around; padding-top: 15px; z-index: 50;
+            background: rgba(0,0,0,0.95); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; padding-top: 15px; z-index: 100;
         }
-        .tab-icon {
+        .nav-item {
             display: flex; flex-direction: column; align-items: center; gap: 6px;
-            color: #444; cursor: pointer; width: 33%;
+            color: #555; cursor: pointer; width: 33%;
         }
-        .tab-icon i { font-size: 1.6rem; transition: 0.3s; }
-        .tab-icon span { font-size: 0.7rem; font-weight: 800; }
-        .tab-icon.active { color: var(--primary); }
-        .tab-icon.active i { transform: translateY(-3px); text-shadow: 0 0 15px var(--primary); }
+        .nav-item i { font-size: 1.5rem; transition: 0.2s; }
+        .nav-item span { font-size: 0.7rem; font-weight: 800; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active i { transform: translateY(-4px); }
 
-        /* --- MODALS --- */
+        /* --- CUSTOM MODALS (Matches UI) --- */
         .modal-wrap {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200;
             display: none; align-items: center; justify-content: center;
         }
         .modal-wrap.open { display: flex; animation: fadeIn 0.2s; }
-        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .ios-modal {
-            background: #1c1c1e; width: 85%; max-width: 360px;
+            background: #151515; width: 85%; max-width: 320px;
             border-radius: 24px; padding: 30px; border: 1px solid #333; text-align: center;
         }
+        .modal-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .modal-desc { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
+
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
         .modal-btn {
-            display: block; width: 100%; padding: 18px; margin-top: 12px;
-            background: #2c2c2e; color: #fff; border-radius: 14px;
-            text-decoration: none; font-weight: 700;
+            width: 100%; padding: 15px; border-radius: 14px;
+            font-weight: 700; border: none; cursor: pointer; font-size: 1rem;
         }
+        .btn-confirm { background: var(--primary); color: #fff; }
+        .btn-cancel { background: #252525; color: #fff; }
+
+        /* --- TOAST --- */
+        #toast {
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: #fff; color: #000; padding: 12px 35px; border-radius: 50px;
+            font-weight: 800; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 300;
+            box-shadow: 0 10px 40px rgba(255,255,255,0.2);
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
 
         #auth-screen {
             position: fixed; inset: 0; background: #000; z-index: 999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-
-        #toast {
-            position: fixed; top: 90px; left: 50%; transform: translateX(-50%) scale(0.9);
-            background: #fff; color: #000; padding: 12px 35px; border-radius: 50px;
-            font-weight: 800; opacity: 0; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            pointer-events: none; z-index: 200; box-shadow: 0 10px 40px rgba(255,255,255,0.2);
-        }
-        #toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
     </style>
 </head>
 <body>
@@ -163,173 +173,183 @@
         messagingSenderId: "483366364300",
         appId: "1:483366364300:web:2448b37333330d29d047a9"
       };
-      const app = initializeApp(firebaseConfig);
+      initializeApp(firebaseConfig);
     </script>
 
     <div id="toast">Notification</div>
 
     <div id="auth-screen">
         <div class="logo" style="font-size: 3rem; margin-bottom: 10px;">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <p style="color:#666; margin-bottom: 50px; font-weight: 600; letter-spacing: 1px;">INFINITY EDITION</p>
-        <button class="red-btn" style="width: auto; padding: 18px 60px;" onclick="handleLogin()">
-            CONNECT GMAIL
+        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">FINAL ARCHITECT EDITION</p>
+        <button class="btn" style="background:var(--primary); color:#fff; width:auto; padding: 18px 60px;" onclick="handleLogin()">
+            LOGIN
         </button>
     </div>
 
-    <header class="ios-header">
-        <div class="logo">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <div class="header-actions">
-            <div class="icon-btn" onclick="openModal('tg-modal')" style="color:#0088cc"><i class="fab fa-telegram-plane"></i></div>
-            <div class="icon-btn" onclick="confirmLogout()" style="color:var(--primary)"><i class="fas fa-power-off"></i></div>
-        </div>
-    </header>
-
-    <div class="scroll-view">
-
-        <div id="tab-home" class="tab-content active">
-            <div class="glass-card">
-                <div style="font-size:0.8rem; font-weight:800; color:#555; margin-bottom:15px;">ACTIVE SESSION ALIAS</div>
-                <div id="alias-display" class="email-box" onclick="copyText(this.innerText)">
-                    TAP GENERATE
-                </div>
-                <button class="red-btn" onclick="generateAlias()">GENERATE NEW</button>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin: 25px 10px 15px 10px;">
-                <span class="logo" style="font-size:1.4rem;">INBOX</span>
-                <i class="fas fa-sync-alt" onclick="fetchEmails()" style="color:var(--primary); font-size:1.4rem; cursor: pointer;"></i>
-            </div>
-            
-            <div id="inbox-list" class="list-group">
-                <div style="padding:30px; text-align:center; color:#555">No new messages</div>
-            </div>
-        </div>
-
-        <div id="tab-scanner" class="tab-content">
-            <div class="logo" style="margin-bottom:20px; font-size: 1.5rem;">SCANNER</div>
-            <div class="glass-card">
-                <input type="text" id="scan-query" placeholder="Search Query..." style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:18px; border-radius: 14px; margin-bottom:20px; font-size:1.1rem; outline:none; font-weight: 600;">
-                <button class="red-btn" onclick="scanEmails()">START SCAN</button>
-            </div>
-            <div id="scan-results" class="list-group"></div>
-        </div>
-
-        <div id="tab-history" class="tab-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items: center;">
-                <span class="logo" style="font-size: 1.5rem;">HISTORY</span>
-                <span style="color:var(--primary); font-weight:900; font-size: 0.9rem; cursor: pointer;" onclick="clearHistory()">CLEAR ALL</span>
-            </div>
-            <div id="history-list" class="list-group"></div>
+    <div class="ios-header">
+        <div class="logo">MULTI<span>MAIL</span></div>
+        <div style="display: flex; gap: 15px;">
+            <div class="header-btn" onclick="openModal('tg-modal')" style="color:#0088cc"><i class="fab fa-telegram-plane"></i></div>
+            <div class="header-btn" onclick="askLogout()" style="color:var(--primary)"><i class="fas fa-power-off"></i></div>
         </div>
     </div>
 
-    <div class="tab-bar">
-        <div class="tab-icon active" onclick="switchTab('home', this)">
+    <div class="content">
+
+        <div id="tab-home" class="tab-view active">
+            <div class="card">
+                <div style="font-size:0.8rem; font-weight:700; color:#666; margin-bottom:10px; text-transform:uppercase;">Active Alias</div>
+                <div id="alias-display" class="email-display">
+                    Tap Generate
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-outline" onclick="copyCurrentAlias()">COPY</button>
+                    <button class="btn btn-primary" onclick="generateHybridAlias()">GENERATE</button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 0 5px;">
+                <span class="logo" style="font-size:1.2rem;">INBOX</span>
+                <i id="refresh-icon" class="fas fa-sync-alt" onclick="fetchEmails()" style="color:var(--primary); font-size:1.2rem; cursor:pointer;"></i>
+            </div>
+            
+            <div id="inbox-list" class="list-container">
+                <div style="padding:40px; text-align:center; color:#555">Waiting for new emails...</div>
+            </div>
+        </div>
+
+        <div id="tab-scan" class="tab-view">
+            <div class="logo" style="margin-bottom:20px; font-size:1.5rem;">SCANNER</div>
+            <div class="card">
+                <input type="text" id="scan-query" style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:16px; border-radius:12px; font-size:1rem; outline:none; margin-bottom:15px;" value="from:Instagram" placeholder="Query...">
+                <button class="btn btn-primary" style="width:100%;" onclick="scanEmails()">START SCAN</button>
+            </div>
+            <div id="scan-results" class="list-container"></div>
+        </div>
+
+        <div id="tab-history" class="tab-view">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <span class="logo" style="font-size:1.5rem;">HISTORY</span>
+                <span style="color:var(--primary); font-weight:800; cursor:pointer;" onclick="askClearHistory()">CLEAR</span>
+            </div>
+            <div id="history-list" class="list-container"></div>
+        </div>
+
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('home', this)">
             <i class="fas fa-home"></i> <span>HOME</span>
         </div>
-        <div class="tab-icon" onclick="switchTab('scanner', this)">
+        <div class="nav-item" onclick="switchTab('scan', this)">
             <i class="fas fa-search"></i> <span>SCANNER</span>
         </div>
-        <div class="tab-icon" onclick="switchTab('history', this)">
+        <div class="nav-item" onclick="switchTab('history', this)">
             <i class="fas fa-clock"></i> <span>HISTORY</span>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal-wrap">
+        <div class="ios-modal">
+            <div class="modal-title" id="confirm-title">Are you sure?</div>
+            <div class="modal-desc" id="confirm-desc">This action cannot be undone.</div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-confirm" id="confirm-yes-btn">YES, DO IT</button>
+                <button class="modal-btn btn-cancel" onclick="closeModal('confirm-modal')">CANCEL</button>
+            </div>
         </div>
     </div>
 
     <div id="tg-modal" class="modal-wrap" onclick="closeModal('tg-modal')">
         <div class="ios-modal" onclick="event.stopPropagation()">
-            <div class="logo" style="font-size:1.5rem; margin-bottom: 5px;">TELEGRAM</div>
-            <p style="color:#666; font-size: 0.8rem; margin-bottom: 20px;">Join the community</p>
+            <div class="modal-title">TELEGRAM</div>
             <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="modal-btn" style="background:#0088cc">JOIN CHANNEL</a>
-            <a href="https://t.me/i_necxy" target="_blank" class="modal-btn">CONTACT ADMIN</a>
-            <button onclick="closeModal('tg-modal')" style="background:transparent; border:none; color:var(--primary); margin-top:20px; font-weight:900; font-size: 1rem;">CLOSE</button>
+            <a href="https://t.me/i_necxy" target="_blank" class="modal-btn" style="background:#252525">CONTACT ADMIN</a>
+            <button onclick="closeModal('tg-modal')" style="background:transparent; border:none; color:var(--text-gray); margin-top:15px; font-weight:700;">CLOSE</button>
         </div>
     </div>
 
     <div id="email-modal" class="modal-wrap">
-        <div class="ios-modal" style="text-align:left; max-height:75vh; overflow-y:auto; max-width: 90%;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <span style="color:var(--primary); font-weight:900; font-size: 1.1rem;">MESSAGE</span>
-                <i class="fas fa-times" onclick="closeModal('email-modal')" style="font-size: 1.2rem; cursor: pointer;"></i>
+        <div class="ios-modal" style="text-align:left; max-height:75vh; overflow-y:auto; width:90%;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <span style="color:var(--primary); font-weight:800;">MESSAGE</span>
+                <i class="fas fa-times" onclick="closeModal('email-modal')" style="font-size:1.2rem; cursor:pointer;"></i>
             </div>
-            <div id="email-body" style="color:#ddd; line-height:1.6; font-size:1rem;"></div>
+            <div id="email-body" style="color:#ddd; line-height:1.6; font-size:1rem; white-space: pre-wrap;"></div>
         </div>
     </div>
 
     <script>
-        // CLIENT CONFIG
         const CLIENT_ID = '327243505568-tp9gl9v9ifvdab55q2djb74vn3f1ht9j.apps.googleusercontent.com';
-        
-        let tokenClient;
-        let accessToken = null;
-        let sessionStart = Date.now();
-        let usedAliases = JSON.parse(localStorage.getItem('infinity_history')) || [];
+        let tokenClient, accessToken, sessionStart = Date.now();
+        let usedAliases = JSON.parse(localStorage.getItem('final_history')) || [];
+        let confirmCallback = null;
 
-        // --- RIPPLE ANIMATION ---
-        document.addEventListener('click', (e) => {
-            let ripple = document.createElement('div');
-            ripple.className = 'ripple';
-            ripple.style.left = e.clientX + 'px';
-            ripple.style.top = e.clientY + 'px';
-            ripple.style.width = ripple.style.height = '20px';
-            document.body.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 600);
-        });
-
-        // --- AUTH LOGIC (PERSISTENT) ---
         window.onload = () => {
             renderHistory();
-            
-            // Check LocalStorage for existing session
-            const savedToken = localStorage.getItem('inf_token');
-            const savedEmail = localStorage.getItem('inf_email');
+            const savedToken = localStorage.getItem('final_token');
+            const savedEmail = localStorage.getItem('final_email');
+            const tokenTime = localStorage.getItem('final_time');
+            const isExpired = tokenTime && (Date.now() - parseInt(tokenTime) > 3500000); 
 
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.readonly',
-                callback: (r) => { 
-                    if(r.access_token) createSession(r.access_token);
-                }
+                callback: (r) => { if(r.access_token) createSession(r.access_token); }
             });
 
-            // Auto-Restore Session
-            if(savedToken && savedEmail) {
-                console.log("Session Restored");
+            if(savedToken && savedEmail && !isExpired) {
                 accessToken = savedToken;
                 window.userEmail = savedEmail;
                 document.getElementById('auth-screen').style.display = 'none';
-                showToast("Session Restored");
+                showToast("Welcome Back");
             }
         };
 
         function handleLogin() { tokenClient.requestAccessToken(); }
 
         async function createSession(token) {
-            accessToken = token;
             try {
                 const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {headers: {'Authorization': `Bearer ${token}`}});
                 const d = await r.json();
-                
-                // SAVE SESSION FOREVER (Until Logout)
-                window.userEmail = d.emailAddress;
-                localStorage.setItem('inf_token', token);
-                localStorage.setItem('inf_email', d.emailAddress);
-                
+                accessToken = token; window.userEmail = d.emailAddress;
+                localStorage.setItem('final_token', token);
+                localStorage.setItem('final_email', d.emailAddress);
+                localStorage.setItem('final_time', Date.now());
                 document.getElementById('auth-screen').style.display = 'none';
-                sessionStart = Date.now(); // For new email filter
+                sessionStart = Date.now();
                 showToast("Connected");
-            } catch(e) { alert("Auth Error"); }
+            } catch(e) { alert("Login Failed"); }
         }
 
-        function confirmLogout() {
-            if(confirm("LOGOUT: Are you sure?")) {
-                localStorage.removeItem('inf_token');
-                localStorage.removeItem('inf_email');
-                location.reload();
-            }
+        // --- CUSTOM CONFIRM LOGIC ---
+        function showConfirm(title, desc, callback) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-desc').innerText = desc;
+            confirmCallback = callback;
+            openModal('confirm-modal');
+        }
+        
+        document.getElementById('confirm-yes-btn').onclick = () => {
+            if(confirmCallback) confirmCallback();
+            closeModal('confirm-modal');
+        };
+
+        function askLogout() {
+            showConfirm("Logout?", "Your session will be terminated.", () => {
+                localStorage.clear(); location.reload();
+            });
         }
 
-        // --- APP FUNCTIONS ---
-        function generateAlias() {
-            if(!window.userEmail) return showToast("Login First");
+        function askClearHistory() {
+            showConfirm("Clear History?", "All saved aliases will be lost.", () => {
+                usedAliases = []; localStorage.removeItem('final_history'); renderHistory();
+            });
+        }
+
+        // --- GENERATOR ---
+        function generateHybridAlias() {
+            if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
             const [u, d] = window.userEmail.split('@');
             let dotted = "";
             for(let i=0; i<u.length; i++) {
@@ -343,27 +363,33 @@
             b.innerText = alias; b.classList.add('active');
             
             usedAliases.unshift(alias);
-            localStorage.setItem('infinity_history', JSON.stringify(usedAliases));
+            localStorage.setItem('final_history', JSON.stringify(usedAliases));
             renderHistory();
             copyText(alias);
         }
 
-        // AUTO TOKEN REFRESH ON 401 ERROR
+        function copyCurrentAlias() {
+            const txt = document.getElementById('alias-display').innerText;
+            if(txt.includes("Generate")) return showToast("Generate First!");
+            copyText(txt);
+        }
+
+        // --- EMAILS WITH SPINNER ---
         async function fetchEmails() {
-            if(!accessToken) return;
+            if(!accessToken) return showToast("Login Required");
+            const icon = document.getElementById('refresh-icon');
             const list = document.getElementById('inbox-list');
-            list.innerHTML = '<div style="padding:30px; text-align:center; color:#666">Checking...</div>';
+            
+            icon.classList.add('spin'); // Start Spin
             
             try {
                 const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10`, {headers: {'Authorization': `Bearer ${accessToken}`}});
-                
-                // If Token Expired (401), Prompt Re-Login silently if possible or ask user
                 if(r.status === 401) {
-                    showToast("Session Expired - Refreshing");
-                    tokenClient.requestAccessToken(); // Trigger re-auth
+                    showToast("Token Expired. Re-login.");
+                    tokenClient.requestAccessToken();
+                    icon.classList.remove('spin');
                     return;
                 }
-
                 const d = await r.json();
                 list.innerHTML = "";
                 
@@ -372,34 +398,34 @@
                     for(const msg of d.messages) {
                         const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                         const det = await m.json();
-                        // Filter Logic
                         if(parseInt(det.internalDate) > sessionStart) {
                             renderItem(det, list);
                             count++;
                         }
                     }
-                    if(count === 0) list.innerHTML = '<div style="padding:30px; text-align:center; color:#555">No new emails</div>';
-                } else { list.innerHTML = '<div style="padding:30px; text-align:center; color:#555">Inbox Empty</div>'; }
-            } catch(e) { list.innerHTML = "Error"; }
+                    if(count === 0) list.innerHTML = '<div style="padding:40px; text-align:center; color:#555">No new emails</div>';
+                } else { list.innerHTML = '<div style="padding:40px; text-align:center; color:#555">Inbox Empty</div>'; }
+            } catch(e) { list.innerHTML = "Error loading"; }
+            
+            icon.classList.remove('spin'); // Stop Spin
         }
 
         async function scanEmails() {
-            if(!accessToken) return;
+            if(!accessToken) return showToast("Login Required");
             const q = document.getElementById('scan-query').value;
             const list = document.getElementById('scan-results');
-            list.innerHTML = '<div style="padding:30px; text-align:center; color:#666">Scanning...</div>';
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666">Scanning...</div>';
             
             const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=5`, {headers: {'Authorization': `Bearer ${accessToken}`}});
             const d = await r.json();
             list.innerHTML = "";
-
             if(d.messages) {
                 for(const msg of d.messages) {
                     const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                     const det = await m.json();
                     renderItem(det, list);
                 }
-            } else { list.innerHTML = '<div style="padding:30px; text-align:center; color:#555">No matches found</div>'; }
+            } else { list.innerHTML = '<div style="padding:20px; text-align:center; color:#555">No matches found</div>'; }
         }
 
         function renderItem(det, container) {
@@ -418,44 +444,36 @@
                     <div class="list-head">${from.split('<')[0]}</div>
                     <div class="list-sub">${sub}</div>
                 </div>
-                <i class="fas fa-chevron-right" style="color:#333"></i>
+                <i class="fas fa-chevron-right" style="color:#444"></i>
             `;
             container.appendChild(div);
         }
 
-        // HISTORY
         function renderHistory() {
             const l = document.getElementById('history-list'); l.innerHTML = "";
             usedAliases.forEach((a, i) => {
                 const div = document.createElement('div'); div.className = 'list-item';
                 div.innerHTML = `
-                    <div class="list-info" style="width:65%">
-                        <div class="list-head" style="font-family:monospace; font-size:0.9rem;">${a}</div>
-                    </div>
-                    <div style="display:flex; gap:20px;">
-                        <i class="fas fa-copy" style="font-size:1.2rem; color:#fff;" onclick="copyText('${a}')"></i>
-                        <i class="fas fa-trash" style="font-size:1.2rem; color:var(--primary);" onclick="deleteHist(${i})"></i>
+                    <div class="list-info" style="width:70%"><div class="list-head" style="font-family:monospace;">${a}</div></div>
+                    <div style="display:flex; gap:15px;">
+                        <i class="fas fa-copy" style="color:#fff;" onclick="copyText('${a}')"></i>
+                        <i class="fas fa-trash" style="color:var(--primary);" onclick="deleteHist(${i})"></i>
                     </div>
                 `;
                 l.appendChild(div);
             });
         }
         function deleteHist(i) {
-            if(confirm("Delete Item?")) {
+            showConfirm("Delete Item?", "Remove from history?", () => {
                 usedAliases.splice(i, 1);
-                localStorage.setItem('infinity_history', JSON.stringify(usedAliases));
+                localStorage.setItem('final_history', JSON.stringify(usedAliases));
                 renderHistory();
-            }
-        }
-        function clearHistory() { 
-            if(confirm("Delete All History?")) { 
-                usedAliases=[]; localStorage.removeItem('infinity_history'); renderHistory(); 
-            }
+            });
         }
 
         // UTILS
         function copyText(t) {
-            if(t.includes("GENERATE")) return;
+            if(t.includes("Generate")) return;
             navigator.clipboard.writeText(t);
             showToast("Copied");
         }
@@ -467,9 +485,9 @@
         function openModal(id) { document.getElementById(id).classList.add('open'); }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
         function switchTab(id, el) {
-            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.tab-view').forEach(x => x.classList.remove('active'));
             document.getElementById('tab-'+id).classList.add('active');
-            document.querySelectorAll('.tab-icon').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
             el.classList.add('active');
         }
     </script>
