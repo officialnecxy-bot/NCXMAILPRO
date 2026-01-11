@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail Dual</title>
+    <title>MultiMail Long</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -97,7 +97,7 @@
         .email-display {
             background: #080808; border: 1px dashed #333;
             padding: 20px; border-radius: 16px; margin-bottom: 20px;
-            font-family: monospace; font-size: 1.1rem; color: #777;
+            font-family: monospace; font-size: 0.95rem; color: #777; /* Font thoda chota kiya taaki lamba email fit ho */
             word-break: break-all;
         }
         .email-display.active { color: #fff; border-color: var(--primary); border-style: solid; }
@@ -216,7 +216,7 @@
 
     <div id="auth-screen">
         <div class="logo" style="font-size: 3rem; margin-bottom: 10px;">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">DUAL CORE EDITION</p>
+        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">LONG-TAIL EDITION</p>
         <button class="btn" style="background:var(--primary); color:#fff; width:auto; padding: 18px 60px;" onclick="handleLogin()">
             LOGIN
         </button>
@@ -241,7 +241,7 @@
                 
                 <div class="btn-group">
                     <button class="btn btn-outline" onclick="generateDotAlias()">DOT MODE</button>
-                    <button class="btn btn-primary" onclick="generateMixAlias()">MIX MODE</button>
+                    <button class="btn btn-primary" onclick="generateMixAlias()">MIX MODE (LONG)</button>
                 </div>
                 <button class="btn" style="background:#111; color:#777; margin-top:10px; padding:10px;" onclick="copyCurrentAlias()">COPY CURRENT</button>
             </div>
@@ -299,17 +299,9 @@
         <div class="ios-modal" onclick="event.stopPropagation()">
             <div class="modal-title" style="font-size: 1.5rem;">TELEGRAM HUB</div>
             <p class="modal-desc">Join the community or contact support</p>
-            
-            <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="tg-link tg-channel">
-                <i class="fab fa-telegram-plane"></i> JOIN CHANNEL
-            </a>
-            
+            <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="tg-link tg-channel"><i class="fab fa-telegram-plane"></i> JOIN CHANNEL</a>
             <div style="height:10px;"></div>
-            
-            <a href="https://t.me/i_necxy" target="_blank" class="tg-link tg-admin">
-                <i class="fas fa-comment-alt"></i> CONTACT ADMIN
-            </a>
-            
+            <a href="https://t.me/i_necxy" target="_blank" class="tg-link tg-admin"><i class="fas fa-comment-alt"></i> CONTACT ADMIN</a>
             <button onclick="closeModal('tg-modal')" class="modal-close-btn">CLOSE</button>
         </div>
     </div>
@@ -330,7 +322,6 @@
         let usedAliases = JSON.parse(localStorage.getItem('final_history')) || [];
         let confirmCallback = null;
 
-        // --- RIPPLE ANIMATION ---
         document.addEventListener('click', (e) => {
             let ripple = document.createElement('div');
             ripple.className = 'ripple';
@@ -414,26 +405,21 @@
             });
         }
 
-        // --- 1. DOT MODE (STEALTH) ---
+        // --- 1. DOT MODE ---
         function generateDotAlias() {
             if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
             const [u, d] = window.userEmail.split('@');
             let dotted = "";
             for(let i=0; i<u.length; i++) {
                 dotted += u[i];
-                // Aggressive Dots: 80% chance, no double dots
-                if(i < u.length-1 && Math.random() > 0.2) {
-                    dotted += ".";
-                }
+                if(i < u.length-1 && Math.random() > 0.2) dotted += ".";
             }
-            // Ensure at least one dot if randomness fails
             if(dotted === u) dotted = u.split('').join('.');
-
             const alias = `${dotted}@${d}`;
             updateAliasDisplay(alias);
         }
 
-        // --- 2. MIX MODE (ULTIMATE) ---
+        // --- 2. MIX MODE (LONG TAIL) ---
         function generateMixAlias() {
             if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
             const [u, d] = window.userEmail.split('@');
@@ -442,8 +428,12 @@
                 dotted += u[i];
                 if(i < u.length-1 && Math.random() > 0.5) dotted += ".";
             }
-            const tag = Math.random().toString(36).substring(2,6); // Random tag
-            const alias = `${dotted}+${tag}@${d}`;
+            // LONG TAG GENERATION (Approx 12-14 chars)
+            const part1 = Math.random().toString(36).substring(2);
+            const part2 = Math.random().toString(36).substring(2, 8);
+            const longTag = part1 + part2;
+            
+            const alias = `${dotted}+${longTag}@${d}`;
             updateAliasDisplay(alias);
         }
 
@@ -483,7 +473,7 @@
                     for(const msg of d.messages) {
                         const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                         const det = await m.json();
-                        // FILTER: SHOW ONLY NEW EMAILS (After Session Start)
+                        // FILTER: SHOW ONLY NEW EMAILS
                         if(parseInt(det.internalDate) > sessionStart) {
                             renderItem(det, list);
                             count++;
