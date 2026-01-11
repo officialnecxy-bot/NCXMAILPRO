@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail Final</title>
+    <title>MultiMail Installable</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -97,7 +97,7 @@
         .email-display {
             background: #080808; border: 1px dashed #333;
             padding: 20px; border-radius: 16px; margin-bottom: 20px;
-            font-family: monospace; font-size: 0.95rem; color: #777; /* Smaller font for long emails */
+            font-family: monospace; font-size: 0.95rem; color: #777;
             word-break: break-all;
         }
         .email-display.active { color: #fff; border-color: var(--primary); border-style: solid; }
@@ -113,6 +113,18 @@
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 5px 20px rgba(255, 59, 48, 0.3); }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: #fff; }
         .btn:active { transform: scale(0.95); }
+
+        /* INSTALL BUTTON (Hidden by default) */
+        #install-btn-container {
+            display: none; /* Hidden until browser says ready */
+            margin-top: 15px;
+        }
+        .btn-install {
+            width: 100%; background: #222; border: 1px solid #333; color: var(--primary);
+            padding: 12px; border-radius: 12px; font-weight: 800; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-install:hover { background: #333; }
 
         /* --- SPINNER --- */
         .spin { animation: spin 1s linear infinite; }
@@ -216,7 +228,7 @@
 
     <div id="auth-screen">
         <div class="logo" style="font-size: 3rem; margin-bottom: 10px;">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">INFINITY EDITION</p>
+        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">APP EDITION</p>
         <button class="btn" style="background:var(--primary); color:#fff; width:auto; padding: 18px 60px;" onclick="handleLogin()">
             LOGIN
         </button>
@@ -242,6 +254,12 @@
                 <div class="btn-group">
                     <button class="btn btn-outline" onclick="copyCurrentAlias()">COPY</button>
                     <button class="btn btn-primary" onclick="generateLongMixAlias()">GENERATE</button>
+                </div>
+
+                <div id="install-btn-container">
+                    <button class="btn-install" onclick="installPWA()">
+                        <i class="fas fa-download"></i> INSTALL APP
+                    </button>
                 </div>
             </div>
 
@@ -320,6 +338,29 @@
         let tokenClient, accessToken, sessionStart = Date.now();
         let usedAliases = JSON.parse(localStorage.getItem('final_history')) || [];
         let confirmCallback = null;
+        let deferredPrompt;
+
+        // --- PWA INSTALL LOGIC ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn-container').style.display = 'block';
+        });
+
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('install-btn-container').style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        }
 
         // --- RIPPLE ANIMATION ---
         document.addEventListener('click', (e) => {
@@ -405,19 +446,16 @@
             });
         }
 
-        // --- LONG MIX GENERATOR (DOTS + PLUS + LONG CODE) ---
+        // --- LONG MIX GENERATOR ---
         function generateLongMixAlias() {
             if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
             const [u, d] = window.userEmail.split('@');
             let dotted = "";
-            
-            // 1. Aggressive Dots
             for(let i=0; i<u.length; i++) {
                 dotted += u[i];
                 if(i < u.length-1 && Math.random() > 0.4) dotted += ".";
             }
-            
-            // 2. Long Tag (10-12 chars)
+            // Long Tag (12-14 chars)
             const part1 = Math.random().toString(36).substring(2);
             const part2 = Math.random().toString(36).substring(2, 8);
             const longTag = part1 + part2;
@@ -459,6 +497,7 @@
                     for(const msg of d.messages) {
                         const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                         const det = await m.json();
+                        // Filter for New Emails
                         if(parseInt(det.internalDate) > sessionStart) {
                             renderItem(det, list);
                             count++;
