@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail Architect</title>
+    <title>MultiMail Infinity</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -14,11 +14,10 @@
     <style>
         :root {
             --bg: #000000;
-            --glass: rgba(20, 20, 20, 0.85);
+            --glass: rgba(20, 20, 20, 0.9);
             --border: rgba(255, 255, 255, 0.15);
-            --primary: #ff3b30; /* Red */
+            --primary: #ff3b30; /* iOS Red */
             --white: #ffffff;
-            --text-gray: #888;
             --blur: 30px;
         }
 
@@ -34,13 +33,13 @@
             user-select: none;
         }
 
-        /* --- HEADER (Fixed & High Z-Index) --- */
+        /* --- HEADER --- */
         .ios-header {
             position: fixed; top: 0; width: 100%; height: 80px;
             background: rgba(0,0,0,0.95); backdrop-filter: blur(var(--blur));
             border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; padding-top: 10px; z-index: 100; /* Z-Index increased */
+            padding: 0 20px; padding-top: 10px; z-index: 100;
         }
         .logo { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; }
         .logo span { color: var(--primary); }
@@ -52,11 +51,10 @@
         }
         .header-btn:active { background: var(--primary); color: #000; }
 
-        /* --- MAIN SCROLL AREA (Padding Fix) --- */
+        /* --- CONTENT --- */
         .content {
             flex: 1; overflow-y: auto;
-            /* Padding Top 130px to clear header */
-            padding: 130px 20px 110px 20px; 
+            padding: 130px 20px 110px 20px; /* Header Space */
         }
 
         .tab-view { display: none; animation: slideUp 0.3s ease; }
@@ -89,10 +87,9 @@
         }
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 5px 20px rgba(255, 59, 48, 0.3); }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: #fff; }
-        
         .btn:active { transform: scale(0.95); }
 
-        /* --- SPIN ANIMATION --- */
+        /* --- SPINNER --- */
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -123,7 +120,7 @@
         .nav-item.active { color: var(--primary); }
         .nav-item.active i { transform: translateY(-4px); }
 
-        /* --- CUSTOM MODALS (Matches UI) --- */
+        /* --- MODALS --- */
         .modal-wrap {
             position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200;
             display: none; align-items: center; justify-content: center;
@@ -180,7 +177,7 @@
 
     <div id="auth-screen">
         <div class="logo" style="font-size: 3rem; margin-bottom: 10px;">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">FINAL ARCHITECT EDITION</p>
+        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">INFINITY LOGIN EDITION</p>
         <button class="btn" style="background:var(--primary); color:#fff; width:auto; padding: 18px 60px;" onclick="handleLogin()">
             LOGIN
         </button>
@@ -288,19 +285,34 @@
 
         window.onload = () => {
             renderHistory();
-            const savedToken = localStorage.getItem('final_token');
-            const savedEmail = localStorage.getItem('final_email');
-            const tokenTime = localStorage.getItem('final_time');
-            const isExpired = tokenTime && (Date.now() - parseInt(tokenTime) > 3500000); 
-
+            
+            // --- SESSION PERSISTENCE LOGIC ---
+            const savedToken = localStorage.getItem('persist_token');
+            const savedEmail = localStorage.getItem('persist_email');
+            
+            // Initialize Google Client
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.readonly',
-                callback: (r) => { if(r.access_token) createSession(r.access_token); }
+                callback: (r) => { 
+                    if(r.access_token) {
+                        createSession(r.access_token);
+                    }
+                }
             });
 
-            if(savedToken && savedEmail && !isExpired) {
+            // Restore Session if available (Never expire unless logout)
+            if(savedToken && savedEmail) {
+                console.log("Auto-Login: Restoring session");
                 accessToken = savedToken;
                 window.userEmail = savedEmail;
+                
+                // Restore last generated alias if any
+                const lastAlias = localStorage.getItem('persist_active_alias');
+                if(lastAlias) {
+                    const b = document.getElementById('alias-display');
+                    b.innerText = lastAlias; b.classList.add('active');
+                }
+
                 document.getElementById('auth-screen').style.display = 'none';
                 showToast("Welcome Back");
             }
@@ -312,17 +324,20 @@
             try {
                 const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {headers: {'Authorization': `Bearer ${token}`}});
                 const d = await r.json();
-                accessToken = token; window.userEmail = d.emailAddress;
-                localStorage.setItem('final_token', token);
-                localStorage.setItem('final_email', d.emailAddress);
-                localStorage.setItem('final_time', Date.now());
+                
+                // Save Session Data
+                accessToken = token; 
+                window.userEmail = d.emailAddress;
+                localStorage.setItem('persist_token', token);
+                localStorage.setItem('persist_email', d.emailAddress);
+                
                 document.getElementById('auth-screen').style.display = 'none';
                 sessionStart = Date.now();
                 showToast("Connected");
             } catch(e) { alert("Login Failed"); }
         }
 
-        // --- CUSTOM CONFIRM LOGIC ---
+        // --- CONFIRM MODAL LOGIC ---
         function showConfirm(title, desc, callback) {
             document.getElementById('confirm-title').innerText = title;
             document.getElementById('confirm-desc').innerText = desc;
@@ -336,13 +351,16 @@
         };
 
         function askLogout() {
-            showConfirm("Logout?", "Your session will be terminated.", () => {
-                localStorage.clear(); location.reload();
+            showConfirm("Logout?", "You will be signed out.", () => {
+                localStorage.removeItem('persist_token');
+                localStorage.removeItem('persist_email');
+                localStorage.removeItem('persist_active_alias');
+                location.reload();
             });
         }
 
         function askClearHistory() {
-            showConfirm("Clear History?", "All saved aliases will be lost.", () => {
+            showConfirm("Clear History?", "All aliases will be deleted.", () => {
                 usedAliases = []; localStorage.removeItem('final_history'); renderHistory();
             });
         }
@@ -362,6 +380,9 @@
             const b = document.getElementById('alias-display');
             b.innerText = alias; b.classList.add('active');
             
+            // Persist Active Alias
+            localStorage.setItem('persist_active_alias', alias);
+
             usedAliases.unshift(alias);
             localStorage.setItem('final_history', JSON.stringify(usedAliases));
             renderHistory();
@@ -374,22 +395,25 @@
             copyText(txt);
         }
 
-        // --- EMAILS WITH SPINNER ---
+        // --- FETCH EMAILS (With Auto Re-Auth) ---
         async function fetchEmails() {
             if(!accessToken) return showToast("Login Required");
             const icon = document.getElementById('refresh-icon');
             const list = document.getElementById('inbox-list');
             
-            icon.classList.add('spin'); // Start Spin
+            icon.classList.add('spin');
             
             try {
                 const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10`, {headers: {'Authorization': `Bearer ${accessToken}`}});
+                
+                // If 401 (Expired), refresh silently via User Interaction
                 if(r.status === 401) {
-                    showToast("Token Expired. Re-login.");
+                    showToast("Session Expired. Tap Login.");
                     tokenClient.requestAccessToken();
                     icon.classList.remove('spin');
                     return;
                 }
+
                 const d = await r.json();
                 list.innerHTML = "";
                 
@@ -398,16 +422,16 @@
                     for(const msg of d.messages) {
                         const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                         const det = await m.json();
-                        if(parseInt(det.internalDate) > sessionStart) {
-                            renderItem(det, list);
-                            count++;
-                        }
+                        // Show all emails for "Permanent" feel, or filter if preferred.
+                        // Currently showing recent 10 regardless of session start for persistent feel
+                        renderItem(det, list);
+                        count++;
                     }
                     if(count === 0) list.innerHTML = '<div style="padding:40px; text-align:center; color:#555">No new emails</div>';
                 } else { list.innerHTML = '<div style="padding:40px; text-align:center; color:#555">Inbox Empty</div>'; }
             } catch(e) { list.innerHTML = "Error loading"; }
             
-            icon.classList.remove('spin'); // Stop Spin
+            icon.classList.remove('spin');
         }
 
         async function scanEmails() {
@@ -440,7 +464,7 @@
                 openModal('email-modal');
             };
             div.innerHTML = `
-                <div class="list-info">
+                <div class="list-info" style="width:80%;">
                     <div class="list-head">${from.split('<')[0]}</div>
                     <div class="list-sub">${sub}</div>
                 </div>
