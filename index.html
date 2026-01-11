@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail iOS</title>
+    <title>MultiMail Pro</title>
     <link rel="manifest" href="manifest.json">
+    
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
             --bg: #000000;
-            --glass: rgba(28, 28, 30, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --primary: #ff3b30; /* iOS System Red */
+            --glass: rgba(28, 28, 30, 0.75);
+            --border: rgba(255, 255, 255, 0.15);
+            --primary: #ff3b30;
             --white: #ffffff;
-            --gray: #8e8e93;
-            --blur: 25px;
+            --blur: 30px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,235 +28,206 @@
             color: var(--white);
             font-family: 'Inter', sans-serif;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             overflow: hidden;
+            cursor: pointer; /* Enhances tap feel */
         }
 
-        /* --- TYPOGRAPHY (BOLT FONT) --- */
-        .h1-bold { font-family: 'Archivo Black', sans-serif; font-size: 1.8rem; letter-spacing: -1px; text-transform: uppercase; }
-        .h2-bold { font-family: 'Archivo Black', sans-serif; font-size: 1.2rem; margin-bottom: 15px; }
-        .btn-text { font-family: 'Archivo Black', sans-serif; font-size: 1rem; letter-spacing: 0.5px; }
+        /* --- TAP ANIMATION --- */
+        .tap-ripple {
+            position: fixed;
+            width: 20px; height: 20px;
+            background: rgba(255, 59, 48, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.8);
+            animation: ripple-pop 0.5s ease-out forwards;
+            z-index: 9999;
+        }
+        @keyframes ripple-pop {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+        }
 
-        /* --- HEADER (GLASS) --- */
+        /* --- HEADER --- */
         .ios-header {
             position: fixed; top: 0; width: 100%; height: 70px;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
-            border-bottom: 0.5px solid var(--glass-border);
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(var(--blur));
+            border-bottom: 0.5px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 20px; z-index: 50;
         }
+        .logo-text { font-family: 'Archivo Black', sans-serif; font-size: 1.5rem; letter-spacing: -1px; }
         
-        .tg-btn {
-            width: 40px; height: 40px; background: rgba(255,255,255,0.1);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: #0088cc; font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+        .header-icons { display: flex; gap: 15px; }
+        .icon-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; cursor: pointer; transition: 0.2s;
         }
-        .tg-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
+        .icon-btn:active { transform: scale(0.9); background: var(--primary); color: #000; }
 
-        /* --- MAIN CONTENT --- */
-        .scroll-view {
-            flex: 1; overflow-y: auto;
-            padding: 90px 20px 100px 20px; /* Padding for Header & TabBar */
-        }
-
-        .tab-content { display: none; animation: iosFade 0.3s ease; }
+        /* --- MAIN AREA --- */
+        .scroll-view { flex: 1; overflow-y: auto; padding: 90px 20px 100px 20px; }
+        
+        .tab-content { display: none; animation: fadeUp 0.3s ease; }
         .tab-content.active { display: block; }
-        @keyframes iosFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- CARDS (GLASSMORPHISM) --- */
+        /* --- CARDS --- */
         .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
-            border: 1px solid var(--glass-border);
-            border-radius: 22px;
-            padding: 25px;
-            margin-bottom: 20px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 22px; padding: 25px; margin-bottom: 20px;
+            text-align: center; backdrop-filter: blur(var(--blur));
         }
 
-        /* --- GENERATOR --- */
         .email-display {
             background: #000; border: 1px solid #333;
-            padding: 20px; border-radius: 14px;
-            font-family: monospace; font-size: 1.1rem; color: #aaa;
-            margin-bottom: 20px; word-break: break-all;
+            padding: 20px; border-radius: 14px; margin-bottom: 20px;
+            font-family: monospace; font-size: 1rem; color: #aaa;
+            word-break: break-all;
         }
         .email-display.active { color: #fff; border-color: var(--primary); }
 
         .red-btn {
             width: 100%; background: var(--primary); color: #fff;
             border: none; padding: 18px; border-radius: 16px;
-            text-transform: uppercase; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4);
-            transition: 0.2s;
+            font-family: 'Archivo Black', sans-serif; text-transform: uppercase;
+            font-size: 1rem; cursor: pointer; box-shadow: 0 5px 20px rgba(255, 59, 48, 0.3);
         }
-        .red-btn:active { transform: scale(0.96); opacity: 0.9; }
 
-        /* --- LIST ITEMS (INBOX & HISTORY) --- */
+        /* --- LIST ITEMS --- */
         .list-item {
-            background: var(--glass); border-bottom: 1px solid var(--glass-border);
+            background: var(--glass); border-bottom: 1px solid var(--border);
             padding: 18px; display: flex; justify-content: space-between; align-items: center;
         }
         .list-item:first-child { border-top-left-radius: 18px; border-top-right-radius: 18px; }
         .list-item:last-child { border-bottom: none; border-bottom-left-radius: 18px; border-bottom-right-radius: 18px; }
         
-        .list-content { text-align: left; overflow: hidden; }
-        .list-title { font-weight: 800; color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
-        .list-sub { font-size: 0.8rem; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-content { text-align: left; width: 70%; }
+        .list-title { font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .list-sub { font-size: 0.8rem; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* HISTORY ACTIONS */
-        .action-group { display: flex; gap: 15px; }
-        .icon-action { font-size: 1rem; padding: 8px; cursor: pointer; }
-        .icon-copy { color: var(--white); }
-        .icon-del { color: var(--primary); }
-
-        /* --- SCANNER INPUT --- */
-        .search-bar {
-            width: 100%; background: #000; border: 1px solid #333;
-            color: #fff; padding: 15px; border-radius: 12px;
-            font-size: 1rem; font-weight: 600; outline: none; margin-bottom: 15px;
-        }
-        .search-bar:focus { border-color: var(--primary); }
-
-        /* --- TAB BAR (BOTTOM NAV) --- */
+        /* --- BOTTOM NAV --- */
         .tab-bar {
             position: fixed; bottom: 0; width: 100%; height: 85px;
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-top: 0.5px solid var(--glass-border);
-            display: flex; justify-content: space-around; padding-top: 15px;
-            z-index: 50;
+            background: rgba(0,0,0,0.95); border-top: 0.5px solid var(--border);
+            display: flex; justify-content: space-around; padding-top: 15px; z-index: 50;
         }
         .tab-item {
             display: flex; flex-direction: column; align-items: center; gap: 5px;
-            color: var(--gray); cursor: pointer; width: 33%;
+            color: #555; cursor: pointer; width: 33%;
         }
         .tab-item i { font-size: 1.4rem; }
         .tab-item span { font-size: 0.7rem; font-weight: 700; }
         .tab-item.active { color: var(--primary); }
 
-        /* --- CUSTOM MODAL & TOAST --- */
+        /* --- OVERLAYS --- */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100;
-            display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(10px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px);
         }
-        .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
-        
+        .modal-overlay.open { display: flex; animation: fadeIn 0.2s; }
         .ios-modal {
             background: #1c1c1e; width: 85%; max-width: 350px;
-            border-radius: 20px; padding: 25px; text-align: center;
-            border: 1px solid #333;
+            border-radius: 20px; padding: 25px; border: 1px solid #333; text-align: center;
         }
-        
         .modal-btn {
-            display: block; width: 100%; padding: 16px; margin-top: 10px;
+            display: block; width: 100%; padding: 15px; margin-top: 10px;
             background: #2c2c2e; color: #fff; border-radius: 12px;
-            text-decoration: none; font-weight: 700; font-size: 0.95rem;
+            text-decoration: none; font-weight: 700;
         }
-        .modal-btn.highlight { background: #0088cc; } /* Telegram Blue */
 
-        /* TOAST NOTIFICATION */
-        #toast {
-            position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
-            background: rgba(255,255,255,0.9); color: #000; padding: 12px 25px;
-            border-radius: 50px; font-weight: 700; font-size: 0.9rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; transition: 0.3s; pointer-events: none; z-index: 200;
-        }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* AUTH SCREEN */
         #auth-screen {
             position: fixed; inset: 0; background: #000; z-index: 999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
+        
+        #toast {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: #fff; color: #000; padding: 12px 30px; border-radius: 50px;
+            font-weight: 800; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 200;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
     </style>
 </head>
 <body>
 
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCruG7Omql4BV4pCBxEEfLG-Hbym-t_9aQ",
+        authDomain: "exam-warrior-ncx.firebaseapp.com",
+        projectId: "exam-warrior-ncx",
+        storageBucket: "exam-warrior-ncx.firebasestorage.app",
+        messagingSenderId: "483366364300",
+        appId: "1:483366364300:web:2448b37333330d29d047a9"
+      };
+
+      // Initialize Firebase (As requested for structure)
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      console.log("Firebase Initialized");
+    </script>
+
     <div id="toast">Notification</div>
 
     <div id="auth-screen">
-        <div class="h1-bold" style="font-size: 2.5rem;">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <p style="color:var(--gray); margin-bottom: 40px; font-weight: 600;">iOS GLASS EDITION</p>
-        <button class="red-btn" style="width: auto; padding: 15px 40px;" onclick="handleAuth()">
-            <span class="btn-text">CONNECT GMAIL</span>
+        <div class="logo-text" style="font-size: 2.5rem; margin-bottom: 10px;">MULTI<span style="color:var(--primary)">MAIL</span></div>
+        <p style="color:#888; margin-bottom: 40px; font-weight: 600;">PERSISTENT EDITION</p>
+        <button class="red-btn" style="width: auto; padding: 15px 50px;" onclick="handleLogin()">
+            LOGIN
         </button>
     </div>
 
-    <div id="tg-modal" class="modal-overlay" onclick="closeModal('tg-modal')">
-        <div class="modal-box ios-modal" onclick="event.stopPropagation()">
-            <div class="h2-bold">TELEGRAM HUB</div>
-            <p style="color:#888; margin-bottom:20px; font-size:0.9rem;">Join our community or contact support.</p>
-            
-            <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="modal-btn highlight">
-                <i class="fab fa-telegram-plane"></i> JOIN CHANNEL
-            </a>
-            <a href="https://t.me/i_necxy" target="_blank" class="modal-btn">
-                <i class="fas fa-comment-alt"></i> CONTACT ADMIN
-            </a>
-            <button onclick="closeModal('tg-modal')" style="background:transparent; border:none; color:var(--primary); margin-top:15px; font-weight:bold; cursor:pointer;">Close</button>
-        </div>
-    </div>
-
-    <div id="email-modal" class="modal-overlay">
-        <div class="modal-box ios-modal" style="text-align: left;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <span class="h2-bold" style="font-size:1rem; color:var(--primary)">MESSAGE</span>
-                <i class="fas fa-times" onclick="closeModal('email-modal')" style="cursor:pointer; padding:5px;"></i>
-            </div>
-            <div id="email-body" style="color:#ddd; font-size:0.9rem; line-height:1.5; max-height: 60vh; overflow-y:auto;"></div>
-        </div>
-    </div>
-
     <header class="ios-header">
-        <div class="h1-bold">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <div class="tg-btn" onclick="openModal('tg-modal')">
-            <i class="fab fa-telegram-plane"></i>
+        <div class="logo-text">MULTI<span style="color:var(--primary)">MAIL</span></div>
+        <div class="header-icons">
+            <div class="icon-btn" onclick="openModal('tg-modal')" style="color:#0088cc"><i class="fab fa-telegram-plane"></i></div>
+            <div class="icon-btn" onclick="confirmLogout()" style="color:var(--primary)"><i class="fas fa-power-off"></i></div>
         </div>
     </header>
 
     <div class="scroll-view">
-        
+
         <div id="tab-home" class="tab-content active">
             <div class="glass-card">
-                <div class="h2-bold" style="font-size:0.9rem; color:var(--gray);">ACTIVE ALIAS</div>
+                <div style="font-size:0.8rem; font-weight:700; color:#888; margin-bottom:10px;">ACTIVE ALIAS</div>
                 <div id="alias-display" class="email-display" onclick="copyText(this.innerText)">
                     TAP GENERATE
                 </div>
-                <button class="red-btn btn-text" onclick="generateAlias()">
-                    GENERATE NEW
-                </button>
+                <button class="red-btn" onclick="generateAlias()">GENERATE NEW</button>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin: 20px 10px 10px 10px;">
-                <span class="h1-bold" style="font-size:1.2rem;">INBOX</span>
-                <i class="fas fa-sync" onclick="fetchEmails()" style="color:var(--primary); cursor:pointer;"></i>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 20px 10px;">
+                <span class="logo-text" style="font-size:1.2rem;">INBOX</span>
+                <i class="fas fa-sync-alt" onclick="fetchEmails()" style="color:var(--primary); font-size:1.2rem;"></i>
             </div>
-
+            
             <div id="inbox-list" style="border-radius:18px; overflow:hidden;">
-                <div style="text-align:center; padding:20px; color:#555;">Waiting for new emails...</div>
+                <div style="padding:20px; text-align:center; color:#555">No new messages</div>
             </div>
         </div>
 
         <div id="tab-scanner" class="tab-content">
-            <div class="h1-bold" style="margin-bottom:20px; font-size:1.5rem;">SCANNER</div>
+            <div class="logo-text" style="margin-bottom:20px;">SCANNER</div>
             <div class="glass-card">
-                <input type="text" id="scan-query" class="search-bar" value="from:Instagram" placeholder="Search Query...">
-                <button class="red-btn btn-text" onclick="scanEmails()">START SCAN</button>
+                <input type="text" id="scan-query" placeholder="Search Query..." style="width:100%; background:#000; border:1px solid #333; color:#fff; padding:15px; border-radius:12px; margin-bottom:15px; font-size:1rem; outline:none;">
+                <button class="red-btn" onclick="scanEmails()">START SCAN</button>
             </div>
             <div id="scan-results" style="border-radius:18px; overflow:hidden;"></div>
         </div>
 
         <div id="tab-history" class="tab-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <span class="h1-bold" style="font-size:1.5rem;">HISTORY</span>
-                <span style="color:var(--primary); font-weight:800; cursor:pointer;" onclick="clearHistory()">CLEAR ALL</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span class="logo-text">HISTORY</span>
+                <span style="color:var(--primary); font-weight:800;" onclick="clearHistory()">CLEAR</span>
             </div>
             <div id="history-list" style="border-radius:18px; overflow:hidden;"></div>
         </div>
-
     </div>
 
     <div class="tab-bar">
@@ -270,35 +242,114 @@
         </div>
     </div>
 
-    <script>
-        const CLIENT_ID = '327243505568-tp9gl9v9ifvdab55q2djb74vn3f1ht9j.apps.googleusercontent.com';
-        let tokenClient, accessToken;
-        let sessionStart = Date.now();
-        let historyData = JSON.parse(localStorage.getItem('ios_history')) || [];
+    <div id="tg-modal" class="modal-overlay" onclick="closeModal('tg-modal')">
+        <div class="ios-modal" onclick="event.stopPropagation()">
+            <div class="logo-text" style="font-size:1.2rem;">TELEGRAM HUB</div>
+            <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="modal-btn" style="background:#0088cc">JOIN CHANNEL</a>
+            <a href="https://t.me/i_necxy" target="_blank" class="modal-btn">CONTACT ADMIN</a>
+            <button onclick="closeModal('tg-modal')" style="background:transparent; border:none; color:var(--primary); margin-top:15px; font-weight:800;">CLOSE</button>
+        </div>
+    </div>
 
-        // AUTH
+    <div id="email-modal" class="modal-overlay">
+        <div class="ios-modal" style="text-align:left; max-height:70vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <span style="color:var(--primary); font-weight:800;">MESSAGE</span>
+                <i class="fas fa-times" onclick="closeModal('email-modal')"></i>
+            </div>
+            <div id="email-body" style="color:#ddd; line-height:1.5; font-size:0.9rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG
+        const CLIENT_ID = '327243505568-tp9gl9v9ifvdab55q2djb74vn3f1ht9j.apps.googleusercontent.com';
+        
+        let tokenClient;
+        let accessToken = null;
+        let sessionStart = Date.now();
+        let usedAliases = JSON.parse(localStorage.getItem('persist_history')) || [];
+
+        // --- TAP ANIMATION LOGIC ---
+        document.addEventListener('click', (e) => {
+            const ripple = document.createElement('div');
+            ripple.className = 'tap-ripple';
+            ripple.style.left = `${e.clientX}px`;
+            ripple.style.top = `${e.clientY}px`;
+            document.body.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 500);
+        });
+
+        // --- AUTH & PERSISTENCE LOGIC ---
         window.onload = () => {
             renderHistory();
+            
+            // Check for saved session
+            const savedToken = localStorage.getItem('mm_token');
+            const savedEmail = localStorage.getItem('mm_email');
+            const savedTime = localStorage.getItem('mm_time');
+
+            // Initialize Google Client
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.readonly',
-                callback: (r) => { accessToken = r.access_token; if(accessToken) fetchProfile(); }
+                callback: (r) => { 
+                    if(r.access_token) {
+                        setSession(r.access_token);
+                    }
+                }
             });
+
+            // Auto-login if token is fresh (< 50 mins old)
+            if(savedToken && savedEmail && savedTime) {
+                const age = (Date.now() - parseInt(savedTime)) / 1000 / 60;
+                if(age < 50) {
+                    accessToken = savedToken;
+                    window.userEmail = savedEmail;
+                    document.getElementById('auth-screen').style.display = 'none';
+                    showToast("Session Restored");
+                } else {
+                    localStorage.clear(); // Expired
+                }
+            }
         };
-        function handleAuth() { tokenClient.requestAccessToken(); }
-        async function fetchProfile() {
-            try {
-                const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {headers: {'Authorization': `Bearer ${accessToken}`}});
-                const d = await r.json();
-                document.getElementById('auth-screen').style.display = 'none';
-                window.userEmail = d.emailAddress;
-                sessionStart = Date.now();
-                showToast("Welcome Back");
-            } catch(e) { showToast("Login Failed"); }
+
+        function handleLogin() {
+            tokenClient.requestAccessToken();
         }
 
-        // GENERATOR (Hybrid Logic without text)
+        async function setSession(token) {
+            accessToken = token;
+            try {
+                // Fetch Profile to get Email
+                const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {headers: {'Authorization': `Bearer ${token}`}});
+                const d = await r.json();
+                window.userEmail = d.emailAddress;
+                
+                // Save to LocalStorage
+                localStorage.setItem('mm_token', token);
+                localStorage.setItem('mm_email', d.emailAddress);
+                localStorage.setItem('mm_time', Date.now());
+                
+                document.getElementById('auth-screen').style.display = 'none';
+                sessionStart = Date.now();
+                showToast("Logged In");
+            } catch(e) {
+                alert("Login Failed");
+            }
+        }
+
+        function confirmLogout() {
+            if(confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem('mm_token');
+                localStorage.removeItem('mm_email');
+                localStorage.removeItem('mm_time');
+                location.reload();
+            }
+        }
+
+        // --- APP LOGIC ---
         function generateAlias() {
-            if(!window.userEmail) return showToast("Login Required");
+            if(!window.userEmail) return showToast("Login First");
             const [u, d] = window.userEmail.split('@');
             let dotted = "";
             for(let i=0; i<u.length; i++) {
@@ -308,44 +359,44 @@
             const tag = Math.random().toString(36).substring(2,6);
             const alias = `${dotted}+${tag}@${d}`;
             
-            const box = document.getElementById('alias-display');
-            box.innerText = alias;
-            box.classList.add('active');
+            const b = document.getElementById('alias-display');
+            b.innerText = alias; b.classList.add('active');
             
-            saveHistory(alias);
+            usedAliases.unshift(alias);
+            localStorage.setItem('persist_history', JSON.stringify(usedAliases));
+            renderHistory();
             copyText(alias);
         }
 
-        // INBOX (New Mails Only)
         async function fetchEmails() {
             if(!accessToken) return;
             const list = document.getElementById('inbox-list');
-            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666">Refreshing...</div>';
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666">Checking...</div>';
             
             try {
                 const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                 const d = await r.json();
                 list.innerHTML = "";
-
+                
                 if(d.messages) {
                     for(const msg of d.messages) {
                         const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                         const det = await m.json();
+                        // Show only "new" mails from this session
                         if(parseInt(det.internalDate) > sessionStart) {
-                            renderMailItem(det, list);
+                            renderItem(det, list);
                         }
                     }
-                    if(list.innerHTML === "") list.innerHTML = '<div style="padding:20px; text-align:center; color:#555">No new emails yet.</div>';
+                    if(list.innerHTML === "") list.innerHTML = '<div style="padding:20px; text-align:center; color:#555">No new emails</div>';
                 } else { list.innerHTML = '<div style="padding:20px; text-align:center; color:#555">Inbox Empty</div>'; }
-            } catch(e) { list.innerHTML = "Error loading."; }
+            } catch(e) { list.innerHTML = "Error"; }
         }
 
-        // SCANNER
         async function scanEmails() {
             if(!accessToken) return;
             const q = document.getElementById('scan-query').value;
             const list = document.getElementById('scan-results');
-            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666">Searching...</div>';
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666">Scanning...</div>';
             
             const r = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=5`, {headers: {'Authorization': `Bearer ${accessToken}`}});
             const d = await r.json();
@@ -355,73 +406,70 @@
                 for(const msg of d.messages) {
                     const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                     const det = await m.json();
-                    renderMailItem(det, list);
+                    renderItem(det, list);
                 }
-            } else { list.innerHTML = '<div style="padding:20px; text-align:center; color:#555">No matches found.</div>'; }
+            } else { list.innerHTML = '<div style="padding:20px; text-align:center; color:#555">No matches</div>'; }
         }
 
-        function renderMailItem(det, container) {
+        function renderItem(det, container) {
             const h = det.payload.headers;
-            const sub = h.find(x => x.name === 'Subject')?.value || "No Subject";
             const from = h.find(x => x.name === 'From')?.value || "Unknown";
+            const sub = h.find(x => x.name === 'Subject')?.value || "No Subject";
             
             const div = document.createElement('div');
             div.className = 'list-item';
-            div.onclick = () => showEmailBody(det.snippet);
+            div.onclick = () => {
+                document.getElementById('email-body').innerText = det.snippet;
+                openModal('email-modal');
+            };
             div.innerHTML = `
                 <div class="list-content">
                     <div class="list-title">${from.split('<')[0]}</div>
                     <div class="list-sub">${sub}</div>
                 </div>
-                <i class="fas fa-chevron-right" style="color:#444; font-size:0.8rem;"></i>
+                <i class="fas fa-chevron-right" style="color:#444"></i>
             `;
             container.appendChild(div);
         }
 
         // HISTORY
-        function saveHistory(a) { historyData.unshift(a); localStorage.setItem('ios_history', JSON.stringify(historyData)); renderHistory(); }
         function renderHistory() {
             const l = document.getElementById('history-list'); l.innerHTML = "";
-            historyData.forEach((a, index) => {
+            usedAliases.forEach((a, i) => {
                 const div = document.createElement('div'); div.className = 'list-item';
                 div.innerHTML = `
-                    <div class="list-content" style="width:70%;">
-                        <div class="list-title" style="font-weight:600; font-family:monospace;">${a}</div>
-                    </div>
-                    <div class="action-group">
-                        <i class="fas fa-copy icon-action icon-copy" onclick="copyText('${a}')"></i>
-                        <i class="fas fa-trash icon-action icon-del" onclick="deleteHistoryItem(${index})"></i>
+                    <div class="list-content"><div class="list-title" style="font-family:monospace;">${a}</div></div>
+                    <div style="display:flex; gap:15px;">
+                        <i class="fas fa-copy" onclick="copyText('${a}')"></i>
+                        <i class="fas fa-trash" style="color:var(--primary)" onclick="deleteHist(${i})"></i>
                     </div>
                 `;
                 l.appendChild(div);
             });
         }
-        function deleteHistoryItem(index) {
-            historyData.splice(index, 1);
-            localStorage.setItem('ios_history', JSON.stringify(historyData));
-            renderHistory();
-            showToast("Deleted");
+        function deleteHist(i) {
+            if(confirm("Delete this?")) {
+                usedAliases.splice(i, 1);
+                localStorage.setItem('persist_history', JSON.stringify(usedAliases));
+                renderHistory();
+            }
         }
         function clearHistory() { 
-            if(confirm("Delete All?")) { historyData=[]; localStorage.removeItem('ios_history'); renderHistory(); showToast("Cleared"); }
+            if(confirm("Delete All History?")) { 
+                usedAliases=[]; localStorage.removeItem('persist_history'); renderHistory(); 
+            }
         }
 
-        // UI HELPERS
+        // UTILS
         function copyText(t) {
             if(t.includes("GENERATE")) return;
             navigator.clipboard.writeText(t);
-            showToast("Copied to Clipboard");
+            showToast("Copied");
         }
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 2000);
-        }
-        function openModal(id) { document.getElementById(id).classList.add('open'); }
-        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-        function showEmailBody(txt) {
-            document.getElementById('email-body').innerText = txt;
-            openModal('email-modal');
         }
         function switchTab(id, el) {
             document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
@@ -429,6 +477,8 @@
             document.querySelectorAll('.tab-item').forEach(x => x.classList.remove('active'));
             el.classList.add('active');
         }
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
     </script>
 </body>
 </html>
