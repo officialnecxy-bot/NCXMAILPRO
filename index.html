@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiMail Final</title>
+    <title>MultiMail Dual</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -33,21 +33,18 @@
             user-select: none;
         }
 
-        /* --- TAP ANIMATION (BAWAAL RED GLOW) --- */
+        /* --- TAP ANIMATION (RIPPLE) --- */
         .ripple {
-            position: fixed;
-            width: 10px; height: 10px; /* Chota Start */
-            background: rgba(255, 59, 48, 1);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            box-shadow: 0 0 20px rgba(255, 59, 48, 0.8); /* Glow Effect */
+            position: fixed; width: 15px; height: 15px;
+            background: rgba(255, 59, 48, 1); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 0 25px rgba(255, 59, 48, 0.9);
             animation: ripple-burst 0.5s ease-out forwards;
             z-index: 9999;
         }
         @keyframes ripple-burst {
             0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(6); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
         }
 
         /* --- TRANSPARENT HEADER --- */
@@ -56,28 +53,25 @@
             background: transparent; 
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 20px; padding-top: 20px; z-index: 100;
-            pointer-events: none; /* Clicks pass through */
+            pointer-events: none; 
         }
-        
-        .header-content { pointer-events: auto; } /* Buttons clickable */
+        .header-content { pointer-events: auto; } 
 
         .logo { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px; text-shadow: 0 5px 20px #000; }
         .logo span { color: var(--primary); }
 
         .header-btn {
             width: 40px; height: 40px; border-radius: 50%;
-            background: rgba(20, 20, 20, 0.8); 
-            border: 1px solid var(--border);
+            background: rgba(20, 20, 20, 0.8); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: 0.2s; font-size: 1.1rem;
             backdrop-filter: blur(10px);
         }
         .header-btn:active { background: var(--primary); color: #000; border-color: var(--primary); }
 
-        /* --- CONTENT (SPACING FIXED) --- */
+        /* --- CONTENT --- */
         .content {
             flex: 1; overflow-y: auto;
-            /* Yahan padding badha di hai taaki header se chipke nahi */
             padding: 140px 20px 110px 20px; 
         }
 
@@ -113,7 +107,7 @@
         
         .btn {
             flex: 1; padding: 16px; border-radius: 14px; border: none;
-            font-weight: 800; font-size: 0.9rem; text-transform: uppercase;
+            font-weight: 800; font-size: 0.85rem; text-transform: uppercase;
             cursor: pointer; transition: 0.2s;
         }
         .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 5px 20px rgba(255, 59, 48, 0.3); }
@@ -153,37 +147,52 @@
 
         /* --- MODALS --- */
         .modal-wrap {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200;
+            position: fixed; inset: 0; 
+            background: rgba(0,0,0,0.85); z-index: 999;
             display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
         }
         .modal-wrap.open { display: flex; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .ios-modal {
-            background: #151515; width: 85%; max-width: 320px;
-            border-radius: 24px; padding: 30px; border: 1px solid #333; text-align: center;
+            background: #111; width: 85%; max-width: 340px;
+            border-radius: 24px; padding: 30px; 
+            border: 1px solid #333; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
-        .modal-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .modal-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; color: #fff; }
         .modal-desc { color: #888; font-size: 0.9rem; margin-bottom: 25px; }
 
-        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
-        .modal-btn {
-            width: 100%; padding: 15px; border-radius: 14px;
-            font-weight: 700; border: none; cursor: pointer; font-size: 1rem;
+        .modal-actions { display: flex; flex-direction: column; gap: 12px; }
+        
+        .tg-link {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 16px; border-radius: 14px;
+            text-decoration: none; font-weight: 700; font-size: 1rem;
+            transition: 0.2s;
         }
-        .btn-confirm { background: var(--primary); color: #fff; }
-        .btn-cancel { background: #252525; color: #fff; }
+        .tg-channel { background: #0088cc; color: #fff; }
+        .tg-admin { background: #222; border: 1px solid #444; color: #fff; }
+        .tg-link:active { transform: scale(0.98); opacity: 0.8; }
+
+        .modal-close-btn {
+            background: transparent; border: none; color: var(--text-gray); 
+            margin-top: 15px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+        }
+        .btn-confirm { background: var(--primary); color: #fff; width: 100%; padding:15px; border-radius:14px; border:none; font-weight:700; font-size:1rem; }
+        .btn-cancel { background: #252525; color: #fff; width: 100%; padding:15px; border-radius:14px; border:none; font-weight:700; font-size:1rem; }
 
         #toast {
             position: fixed; top: 120px; left: 50%; transform: translateX(-50%) scale(0.9);
             background: #fff; color: #000; padding: 12px 35px; border-radius: 50px;
-            font-weight: 800; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 300;
+            font-weight: 800; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 999;
             box-shadow: 0 10px 40px rgba(255,255,255,0.2);
         }
         #toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
 
         #auth-screen {
-            position: fixed; inset: 0; background: #000; z-index: 999;
+            position: fixed; inset: 0; background: #000; z-index: 1000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
     </style>
@@ -207,7 +216,7 @@
 
     <div id="auth-screen">
         <div class="logo" style="font-size: 3rem; margin-bottom: 10px;">MULTI<span style="color:var(--primary)">MAIL</span></div>
-        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">INFINITY EDITION</p>
+        <p style="color:#666; margin-bottom: 50px; font-weight: 600;">DUAL CORE EDITION</p>
         <button class="btn" style="background:var(--primary); color:#fff; width:auto; padding: 18px 60px;" onclick="handleLogin()">
             LOGIN
         </button>
@@ -231,9 +240,10 @@
                 </div>
                 
                 <div class="btn-group">
-                    <button class="btn btn-outline" onclick="copyCurrentAlias()">COPY</button>
-                    <button class="btn btn-primary" onclick="generateHybridAlias()">GENERATE</button>
+                    <button class="btn btn-outline" onclick="generateDotAlias()">DOT MODE</button>
+                    <button class="btn btn-primary" onclick="generateMixAlias()">MIX MODE</button>
                 </div>
+                <button class="btn" style="background:#111; color:#777; margin-top:10px; padding:10px;" onclick="copyCurrentAlias()">COPY CURRENT</button>
             </div>
 
             <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom: 15px; padding: 0 5px;">
@@ -276,21 +286,31 @@
 
     <div id="confirm-modal" class="modal-wrap">
         <div class="ios-modal">
-            <div class="modal-title" id="confirm-title">Are you sure?</div>
-            <div class="modal-desc" id="confirm-desc">This action cannot be undone.</div>
+            <div class="modal-title" id="confirm-title">Confirm</div>
+            <div class="modal-desc" id="confirm-desc">Action cannot be undone.</div>
             <div class="modal-actions">
-                <button class="modal-btn btn-confirm" id="confirm-yes-btn">YES, DO IT</button>
-                <button class="modal-btn btn-cancel" onclick="closeModal('confirm-modal')">CANCEL</button>
+                <button class="btn-confirm" id="confirm-yes-btn">YES, DO IT</button>
+                <button class="btn-cancel" onclick="closeModal('confirm-modal')">CANCEL</button>
             </div>
         </div>
     </div>
 
     <div id="tg-modal" class="modal-wrap" onclick="closeModal('tg-modal')">
         <div class="ios-modal" onclick="event.stopPropagation()">
-            <div class="modal-title">TELEGRAM</div>
-            <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="modal-btn" style="background:#0088cc">JOIN CHANNEL</a>
-            <a href="https://t.me/i_necxy" target="_blank" class="modal-btn" style="background:#252525">CONTACT ADMIN</a>
-            <button onclick="closeModal('tg-modal')" style="background:transparent; border:none; color:var(--text-gray); margin-top:15px; font-weight:700;">CLOSE</button>
+            <div class="modal-title" style="font-size: 1.5rem;">TELEGRAM HUB</div>
+            <p class="modal-desc">Join the community or contact support</p>
+            
+            <a href="https://t.me/+88Yn76RScSdiNjFl" target="_blank" class="tg-link tg-channel">
+                <i class="fab fa-telegram-plane"></i> JOIN CHANNEL
+            </a>
+            
+            <div style="height:10px;"></div>
+            
+            <a href="https://t.me/i_necxy" target="_blank" class="tg-link tg-admin">
+                <i class="fas fa-comment-alt"></i> CONTACT ADMIN
+            </a>
+            
+            <button onclick="closeModal('tg-modal')" class="modal-close-btn">CLOSE</button>
         </div>
     </div>
 
@@ -310,7 +330,7 @@
         let usedAliases = JSON.parse(localStorage.getItem('final_history')) || [];
         let confirmCallback = null;
 
-        // --- RIPPLE ANIMATION (Bawaal) ---
+        // --- RIPPLE ANIMATION ---
         document.addEventListener('click', (e) => {
             let ripple = document.createElement('div');
             ripple.className = 'ripple';
@@ -341,8 +361,6 @@
                 document.getElementById('auth-screen').style.display = 'none';
                 showToast("Welcome Back");
             }
-            
-            // RESET SESSION TIME ON LOAD (To hide old emails)
             sessionStart = Date.now();
         };
 
@@ -356,10 +374,7 @@
                 localStorage.setItem('persist_token', token);
                 localStorage.setItem('persist_email', d.emailAddress);
                 document.getElementById('auth-screen').style.display = 'none';
-                
-                // Set Session Time for Filter
                 sessionStart = Date.now();
-                
                 showToast("Connected");
             } catch(e) { alert("Login Failed"); }
         }
@@ -399,17 +414,40 @@
             });
         }
 
-        function generateHybridAlias() {
+        // --- 1. DOT MODE (STEALTH) ---
+        function generateDotAlias() {
             if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
             const [u, d] = window.userEmail.split('@');
             let dotted = "";
             for(let i=0; i<u.length; i++) {
                 dotted += u[i];
-                if(i < u.length-1 && Math.random() > 0.6) dotted += ".";
+                // Aggressive Dots: 80% chance, no double dots
+                if(i < u.length-1 && Math.random() > 0.2) {
+                    dotted += ".";
+                }
             }
-            const tag = Math.random().toString(36).substring(2,6);
+            // Ensure at least one dot if randomness fails
+            if(dotted === u) dotted = u.split('').join('.');
+
+            const alias = `${dotted}@${d}`;
+            updateAliasDisplay(alias);
+        }
+
+        // --- 2. MIX MODE (ULTIMATE) ---
+        function generateMixAlias() {
+            if(!window.userEmail) { tokenClient.requestAccessToken(); return; }
+            const [u, d] = window.userEmail.split('@');
+            let dotted = "";
+            for(let i=0; i<u.length; i++) {
+                dotted += u[i];
+                if(i < u.length-1 && Math.random() > 0.5) dotted += ".";
+            }
+            const tag = Math.random().toString(36).substring(2,6); // Random tag
             const alias = `${dotted}+${tag}@${d}`;
-            
+            updateAliasDisplay(alias);
+        }
+
+        function updateAliasDisplay(alias) {
             const b = document.getElementById('alias-display');
             b.innerText = alias; b.classList.add('active');
             localStorage.setItem('persist_active_alias', alias);
@@ -445,7 +483,6 @@
                     for(const msg of d.messages) {
                         const m = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}`, {headers: {'Authorization': `Bearer ${accessToken}`}});
                         const det = await m.json();
-                        
                         // FILTER: SHOW ONLY NEW EMAILS (After Session Start)
                         if(parseInt(det.internalDate) > sessionStart) {
                             renderItem(det, list);
